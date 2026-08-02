@@ -2,330 +2,450 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>我的DeepSeek</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DeepSeek 角色扮演</title>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; max-width: 600px; margin: auto; padding: 16px; background: #f5f5f5; }
-        
-        /* 对话列表 */
-        #conversation-list {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 8px 0 12px 0;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
-        }
-        .conv-tab {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 14px;
-            background: #e5e5ea;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            flex-shrink: 0;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .conv-tab.active {
-            background: #007aff;
-            color: white;
-        }
-        .conv-tab .close-btn {
-            background: none;
-            border: none;
-            color: inherit;
-            font-size: 16px;
-            cursor: pointer;
-            padding: 0 2px;
-            opacity: 0.6;
-        }
-        .conv-tab .close-btn:hover { opacity: 1; }
-        #newConvBtn {
-            padding: 8px 16px;
-            background: #34c759;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f7; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        #chatbox { background: white; border-radius: 12px; padding: 16px; min-height: 350px; margin-bottom: 12px; overflow-y: auto; max-height: 500px; }
-        .user-msg { text-align: right; color: #007aff; margin: 8px 0; }
-        .ai-msg { text-align: left; color: #333; margin: 8px 0; }
-        #input-area { display: flex; gap: 8px; }
-        #userInput { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; font-size: 16px; }
-        #sendBtn { padding: 12px 20px; background: #007aff; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 16px; }
-        #clearBtn { padding: 12px 16px; background: #ff3b30; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; }
-        .loading { opacity: 0.6; color: #888; }
-        .btn-area { display: flex; gap: 8px; margin-top: 8px; }
-        .btn-area button { flex: 1; }
+        #header { background: #ffffff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e5ea; flex-shrink: 0; }
+        #header h1 { font-size: 18px; font-weight: 600; color: #1c1c1e; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin: 0 10px; }
+        .header-btn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px 8px; color: #007aff; border-radius: 8px; }
+        .header-btn:active { background: #e5e5ea; }
+
+        #sidebar { position: fixed; top: 0; left: -100%; width: 85%; max-width: 320px; height: 100%; background: #f8f8fa; z-index: 1000; transition: left 0.3s ease; box-shadow: 2px 0 12px rgba(0,0,0,0.15); display: flex; flex-direction: column; padding: 20px 16px; }
+        #sidebar.open { left: 0; }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999; display: none; }
+        #sidebar-overlay.show { display: block; }
+        #sidebar-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: #1c1c1e; }
+        #conv-list { flex: 1; overflow-y: auto; list-style: none; }
+        #conv-list li { padding: 12px 14px; background: white; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        #conv-list li:active { background: #e5e5ea; }
+        #conv-list li .conv-name { flex: 1; font-size: 15px; color: #1c1c1e; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-right: 8px; }
+        #conv-list li .conv-actions { display: flex; gap: 6px; }
+        #conv-list li .conv-actions button { background: none; border: none; font-size: 18px; color: #8e8e93; padding: 2px 6px; cursor: pointer; }
+        #conv-list li.active { background: #007aff; }
+        #conv-list li.active .conv-name { color: white; }
+        #conv-list li.active .conv-actions button { color: white; }
+        #sidebar-footer { padding-top: 12px; border-top: 1px solid #e5e5ea; }
+        #sidebar-footer button { width: 100%; padding: 10px; background: #007aff; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; }
+        #sidebar-footer button:active { opacity: 0.7; }
+
+        #chat-container { flex: 1; display: flex; flex-direction: column; background: #ffffff; overflow: hidden; }
+        #messages { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; background: #f8f8fa; }
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.6; word-break: break-word; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg-user { align-self: flex-end; background: #007aff; color: white; border-bottom-right-radius: 4px; }
+        .msg-ai { align-self: flex-start; background: #e9e9ed; color: #1c1c1e; border-bottom-left-radius: 4px; }
+        .msg .edit-btn { position: absolute; top: -6px; right: -6px; background: rgba(0,0,0,0.1); border: none; border-radius: 12px; width: 24px; height: 24px; font-size: 12px; display: none; align-items: center; justify-content: center; cursor: pointer; color: #1c1c1e; }
+        .msg-user .edit-btn { color: white; background: rgba(255,255,255,0.2); }
+        .msg:hover .edit-btn, .msg:focus-within .edit-btn { display: flex; }
+        .msg .edit-btn:active { opacity: 0.5; }
+
+        #input-area { display: flex; align-items: flex-end; padding: 10px 12px 12px; background: white; border-top: 1px solid #e5e5ea; gap: 8px; flex-shrink: 0; }
+        #input-box { flex: 1; border: none; background: #f2f2f7; border-radius: 20px; padding: 10px 16px; font-size: 16px; font-family: inherit; resize: none; outline: none; min-height: 44px; max-height: 120px; line-height: 1.5; }
+        #input-box::placeholder { color: #8e8e93; }
+        #send-btn { background: #007aff; border: none; border-radius: 24px; width: 44px; height: 44px; font-size: 20px; color: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        #send-btn:active { opacity: 0.6; }
+        #send-btn:disabled { opacity: 0.4; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal.show { display: flex; }
+        .modal-box { background: white; border-radius: 16px; padding: 24px 20px 20px; width: 85%; max-width: 340px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+        .modal-box h3 { font-size: 18px; margin-bottom: 12px; color: #1c1c1e; }
+        .modal-box input, .modal-box textarea { width: 100%; padding: 12px 14px; border: 1px solid #e5e5ea; border-radius: 10px; font-size: 16px; outline: none; font-family: inherit; margin-bottom: 16px; }
+        .modal-box input:focus, .modal-box textarea:focus { border-color: #007aff; }
+        .modal-box textarea { min-height: 80px; resize: vertical; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-actions button { padding: 8px 20px; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; }
+        .modal-actions .cancel { background: #e5e5ea; color: #1c1c1e; }
+        .modal-actions .confirm { background: #007aff; color: white; }
+        .modal-actions button:active { opacity: 0.6; }
+
+        #empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #8e8e93; font-size: 16px; padding: 40px; text-align: center; }
+        #empty-state span { font-size: 48px; margin-bottom: 12px; }
+        .msg-ai.loading { background: #e9e9ed; color: #8e8e93; min-width: 60px; }
+        .msg-ai.loading::after { content: '●●●'; animation: pulse 1.5s infinite; letter-spacing: 2px; }
+        @keyframes pulse { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
+
+        /* 人设提示条 */
+        #persona-bar {
+            background: #f0f0f5;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #8e8e93;
+            border-bottom: 1px solid #e5e5ea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        #persona-bar .label { font-weight: 500; color: #1c1c1e; }
+        #persona-bar .edit-persona { color: #007aff; background: none; border: none; font-size: 13px; cursor: pointer; }
+        #persona-bar .edit-persona:active { opacity: 0.6; }
     </style>
 </head>
 <body>
 
-    <h2>🤖 DeepSeek 助手</h2>
-
-    <!-- 对话标签栏 -->
-    <div id="conversation-list">
-        <!-- 由 JS 动态生成 -->
+    <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebar">
+        <div id="sidebar-title">📂 对话</div>
+        <ul id="conv-list"></ul>
+        <div id="sidebar-footer">
+            <button onclick="newConversation()">➕ 新建对话</button>
+        </div>
     </div>
 
-    <div id="chatbox"></div>
-    <div id="input-area">
-        <input type="text" id="userInput" placeholder="输入你的问题..." />
-        <button id="sendBtn">发送</button>
+    <div id="header">
+        <button class="header-btn" onclick="toggleSidebar()">☰</button>
+        <h1 id="conv-title">角色扮演</h1>
+        <button class="header-btn" onclick="renameCurrent()">✎</button>
     </div>
-    <div class="btn-area">
-        <button id="clearBtn">🗑️ 清空当前对话</button>
+
+    <div id="persona-bar">
+        <span><span class="label">🧑‍🎤 人设：</span><span id="persona-preview">点击右侧设置</span></span>
+        <button class="edit-persona" onclick="openPersonaEditor()">✎ 设定</button>
+    </div>
+
+    <div id="chat-container">
+        <div id="messages">
+            <div id="empty-state"><span>💬</span><p>发送第一条消息开始角色扮演</p></div>
+        </div>
+        <div id="input-area">
+            <textarea id="input-box" rows="1" placeholder="输入你的行动或对话..." enterkeyhint="send"></textarea>
+            <button id="send-btn" disabled>➤</button>
+        </div>
+    </div>
+
+    <!-- 重命名弹窗 -->
+    <div class="modal" id="rename-modal">
+        <div class="modal-box">
+            <h3>重命名对话</h3>
+            <input type="text" id="rename-input" placeholder="输入新名称" />
+            <div class="modal-actions">
+                <button class="cancel" onclick="closeRename()">取消</button>
+                <button class="confirm" onclick="confirmRename()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑消息弹窗 -->
+    <div class="modal edit-msg-modal" id="edit-msg-modal">
+        <div class="modal-box">
+            <h3>编辑消息</h3>
+            <textarea id="edit-msg-textarea" rows="3"></textarea>
+            <div class="modal-actions">
+                <button class="cancel" onclick="closeEditMsg()">取消</button>
+                <button class="confirm" onclick="confirmEditMsg()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 人设编辑弹窗 -->
+    <div class="modal" id="persona-modal">
+        <div class="modal-box">
+            <h3>🧑‍🎤 设定人设</h3>
+            <p style="font-size:13px;color:#8e8e93;margin-bottom:12px;">AI 将严格遵循这些人设来回应，不会自己编剧情。</p>
+            <textarea id="persona-textarea" rows="6" placeholder="例如：&#10;你叫姜祈岚，25岁，体制内干部，沉稳寡言。&#10;我是你21岁的妹妹，我们被困在一个纯白房间里..."></textarea>
+            <div class="modal-actions">
+                <button class="cancel" onclick="closePersonaEditor()">取消</button>
+                <button class="confirm" onclick="confirmPersona()">保存人设</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const API_KEY = 'sk-e6385ea8871b4df6926c51e81cd883d0'; // 替换成你的真实 Key
+        // ========== 1. 配置 ==========
+        const API_KEY = 'sk-e6385ea8871b4df6926c51e81cd883d0'; // ⚠️ 替换成你的真实 Key
         const API_URL = 'https://api.deepseek.com/chat/completions';
 
-        const chatbox = document.getElementById('chatbox');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const convList = document.getElementById('conversation-list');
-
-        // ====== 数据结构 ======
+        // ========== 2. 数据管理 ==========
         let conversations = [];
         let currentId = null;
+        let editingMsgIndex = null;
 
-        // 从 localStorage 加载
+        // 默认人设
+        const DEFAULT_PERSONA = '你是我的专属角色扮演伙伴。请严格遵守以下规则：\n1. 永远记住你的人设，不要偏离\n2. 只基于我写的剧情和对话来回应，不要自己编造新情节\n3. 描写要细腻、生动、大胆，让人有代入感\n4. 关于亲密或性方面的内容，不要意识流，不要一笔带过，直接而细腻地描写\n5. 用自然口语化的中文，像真实的人一样说话，不要套话';
+
         function loadData() {
-            const saved = localStorage.getItem('multiConvData');
+            const saved = localStorage.getItem('rpAppData');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
                     conversations = data.conversations || [];
                     currentId = data.currentId || null;
+                    if (conversations.length === 0) createDefaultConv();
+                    if (!currentId || !conversations.find(c => c.id === currentId)) currentId = conversations[0].id;
                     return;
                 } catch (e) {}
             }
-            // 默认创建一个对话
+            createDefaultConv();
+        }
+
+        function createDefaultConv() {
             const id = Date.now().toString();
             conversations = [{
                 id: id,
-                title: '新对话',
-                messages: [{ role: 'system', content: 'You are a helpful assistant.' }]
+                title: '角色扮演',
+                messages: [{ role: 'system', content: DEFAULT_PERSONA }],
+                persona: DEFAULT_PERSONA
             }];
             currentId = id;
             saveData();
         }
 
-        function saveData() {
-            localStorage.setItem('multiConvData', JSON.stringify({
-                conversations: conversations,
-                currentId: currentId
-            }));
+        function saveData() { localStorage.setItem('rpAppData', JSON.stringify({ conversations, currentId })); }
+        function getCurrentConv() { return conversations.find(c => c.id === currentId) || conversations[0]; }
+        function getCurrentPersona() {
+            const conv = getCurrentConv();
+            if (conv && conv.persona) return conv.persona;
+            return DEFAULT_PERSONA;
         }
 
-        // 获取当前对话
-        function getCurrentConv() {
-            return conversations.find(c => c.id === currentId) || conversations[0];
-        }
-
-        // ====== 渲染 ======
-        function renderTabs() {
-            convList.innerHTML = '';
-            conversations.forEach((conv, index) => {
-                const tab = document.createElement('div');
-                tab.className = 'conv-tab' + (conv.id === currentId ? ' active' : '');
-                // 显示标题（取第一条用户消息的前10个字，或默认）
-                const title = conv.title || '新对话';
-                tab.innerHTML = `
-                    <span>${title}</span>
-                    <button class="close-btn" data-id="${conv.id}">×</button>
+        // ========== 3. 渲染 ==========
+        function renderSidebar() {
+            const list = document.getElementById('conv-list');
+            list.innerHTML = '';
+            conversations.forEach(conv => {
+                const li = document.createElement('li');
+                li.className = (conv.id === currentId) ? 'active' : '';
+                li.innerHTML = `
+                    <span class="conv-name">${conv.title || '未命名'}</span>
+                    <div class="conv-actions">
+                        <button onclick="event.stopPropagation();openRename('${conv.id}')">✎</button>
+                        <button onclick="event.stopPropagation();deleteConv('${conv.id}')">✕</button>
+                    </div>
                 `;
-                tab.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('close-btn')) return;
-                    switchConv(conv.id);
-                });
-                const closeBtn = tab.querySelector('.close-btn');
-                closeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deleteConv(conv.id);
-                });
-                convList.appendChild(tab);
+                li.onclick = () => switchConv(conv.id);
+                list.appendChild(li);
             });
-            // 新建按钮
-            const newBtn = document.createElement('button');
-            newBtn.id = 'newConvBtn';
-            newBtn.textContent = '+ 新建';
-            newBtn.addEventListener('click', createNewConv);
-            convList.appendChild(newBtn);
         }
 
         function renderMessages() {
+            const div = document.getElementById('messages');
             const conv = getCurrentConv();
-            chatbox.innerHTML = '';
-            if (!conv) return;
-            conv.messages.forEach(msg => {
-                if (msg.role === 'user') {
-                    addMessage(msg.content, 'user', false);
-                } else if (msg.role === 'assistant') {
-                    addMessage(msg.content, 'ai', false);
-                }
-            });
-            chatbox.scrollTop = chatbox.scrollHeight;
-        }
-
-        function addMessage(content, role, save = true) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = role === 'user' ? 'user-msg' : 'ai-msg';
-            msgDiv.textContent = content;
-            chatbox.appendChild(msgDiv);
-            chatbox.scrollTop = chatbox.scrollHeight;
-            if (save) {
-                saveData();
+            if (!conv || conv.messages.length <= 1) {
+                div.innerHTML = `<div id="empty-state"><span>💬</span><p>发送第一条消息开始角色扮演</p></div>`;
+                return;
             }
+            div.innerHTML = '';
+            conv.messages.forEach((msg, idx) => {
+                if (msg.role === 'system') return;
+                const el = document.createElement('div');
+                el.className = `msg msg-${msg.role === 'user' ? 'user' : 'ai'}`;
+                el.textContent = msg.content;
+                if (msg.role === 'user') {
+                    const btn = document.createElement('button');
+                    btn.className = 'edit-btn';
+                    btn.textContent = '✎';
+                    btn.onclick = (e) => { e.stopPropagation();
+                        openEditMsg(idx); };
+                    el.appendChild(btn);
+                }
+                div.appendChild(el);
+            });
+            div.scrollTop = div.scrollHeight;
+            document.getElementById('conv-title').textContent = conv.title || '角色扮演';
+            // 更新人设预览
+            const preview = document.getElementById('persona-preview');
+            const p = conv.persona || DEFAULT_PERSONA;
+            preview.textContent = p.length > 30 ? p.slice(0, 30) + '...' : p;
         }
 
-        // ====== 操作 ======
-        function switchConv(id) {
-            if (currentId === id) return;
-            currentId = id;
+        // ========== 4. 对话操作 ==========
+        function switchConv(id) { if (currentId === id) return; currentId = id;
             saveData();
-            renderTabs();
-            renderMessages();
-        }
-
-        function createNewConv() {
+            renderSidebar();
+            renderMessages(); }
+        function newConversation() {
             const id = Date.now().toString();
             conversations.push({
                 id: id,
-                title: '新对话',
-                messages: [{ role: 'system', content: 'You are a helpful assistant.' }]
+                title: '角色扮演',
+                messages: [{ role: 'system', content: DEFAULT_PERSONA }],
+                persona: DEFAULT_PERSONA
             });
             currentId = id;
             saveData();
-            renderTabs();
+            renderSidebar();
             renderMessages();
-            // 滚动到新标签
-            convList.scrollLeft = convList.scrollWidth;
+            closeSidebar();
+            document.getElementById('input-box').focus();
         }
-
         function deleteConv(id) {
-            if (conversations.length <= 1) {
-                alert('至少保留一个对话');
-                return;
-            }
-            if (!confirm('删除这个对话吗？')) return;
-            const idx = conversations.findIndex(c => c.id === id);
-            conversations.splice(idx, 1);
-            if (currentId === id) {
-                currentId = conversations[0].id;
-            }
+            if (conversations.length <= 1) { alert('至少保留一个对话'); return; }
+            if (!confirm('确定要删除这个对话吗？')) return;
+            conversations = conversations.filter(c => c.id !== id);
+            if (currentId === id) currentId = conversations[0].id;
             saveData();
-            renderTabs();
+            renderSidebar();
             renderMessages();
         }
 
-        function updateCurrentTitle(text) {
+        // ========== 5. 重命名 ==========
+        let renameTargetId = null;
+        function openRename(id) { renameTargetId = id; const c = conversations.find(c => c.id === id); document.getElementById('rename-input').value = c ? c.title : '';
+            document.getElementById('rename-modal').classList.add('show'); }
+        function closeRename() { document.getElementById('rename-modal').classList.remove('show');
+            renameTargetId = null; }
+        function confirmRename() {
+            const val = document.getElementById('rename-input').value.trim();
+            if (!val) return alert('名称不能为空');
+            const c = conversations.find(c => c.id === renameTargetId);
+            if (c) { c.title = val;
+                saveData();
+                renderSidebar();
+                renderMessages(); }
+            closeRename();
+        }
+        function renameCurrent() { openRename(currentId); }
+
+        // ========== 6. 编辑消息 ==========
+        function openEditMsg(idx) { editingMsgIndex = idx; const conv = getCurrentConv(); if (!conv || idx >= conv.messages.length) return; document.getElementById('edit-msg-textarea').value = conv.messages[idx].content;
+            document.getElementById('edit-msg-modal').classList.add('show'); }
+        function closeEditMsg() { document.getElementById('edit-msg-modal').classList.remove('show');
+            editingMsgIndex = null; }
+        function confirmEditMsg() {
+            const val = document.getElementById('edit-msg-textarea').value.trim();
+            if (!val) return alert('内容不能为空');
             const conv = getCurrentConv();
-            if (!conv) return;
-            const short = text.slice(0, 12) + (text.length > 12 ? '...' : '');
-            conv.title = short || '新对话';
-            saveData();
-            renderTabs();
+            if (conv && editingMsgIndex !== null && editingMsgIndex < conv.messages.length) {
+                conv.messages = conv.messages.slice(0, editingMsgIndex + 1);
+                conv.messages[editingMsgIndex].content = val;
+                saveData();
+                renderMessages();
+                sendMessageToAPI(val);
+            }
+            closeEditMsg();
         }
 
-        // ====== API 调用 ======
-        async function callDeepSeek(userMessage) {
+        // ========== 7. 人设编辑 ==========
+        function openPersonaEditor() {
+            const conv = getCurrentConv();
+            document.getElementById('persona-textarea').value = conv.persona || DEFAULT_PERSONA;
+            document.getElementById('persona-modal').classList.add('show');
+        }
+        function closePersonaEditor() {
+            document.getElementById('persona-modal').classList.remove('show');
+        }
+        function confirmPersona() {
+            const val = document.getElementById('persona-textarea').value.trim();
+            if (!val) return alert('人设不能为空');
+            const conv = getCurrentConv();
+            if (conv) {
+                // 更新人设
+                conv.persona = val;
+                // 更新系统消息（如果存在则替换，否则添加）
+                const sysIdx = conv.messages.findIndex(m => m.role === 'system');
+                if (sysIdx !== -1) {
+                    conv.messages[sysIdx].content = val;
+                } else {
+                    conv.messages.unshift({ role: 'system', content: val });
+                }
+                saveData();
+                renderMessages();
+            }
+            closePersonaEditor();
+        }
+
+        // ========== 8. 发送消息与 API 调用 ==========
+        async function sendMessageToAPI(text) {
             const conv = getCurrentConv();
             if (!conv) return;
 
-            // 更新标题（用第一条用户消息）
+            // 更新标题（用第一条消息）
             const userMsgs = conv.messages.filter(m => m.role === 'user');
             if (userMsgs.length === 0) {
-                updateCurrentTitle(userMessage);
+                conv.title = text.slice(0, 10) + (text.length > 10 ? '...' : '');
             }
 
-            conv.messages.push({ role: 'user', content: userMessage });
-            addMessage(userMessage, 'user');
+            // 添加用户消息
+            const lastMsg = conv.messages[conv.messages.length - 1];
+            if (lastMsg.role !== 'user' || lastMsg.content !== text) {
+                conv.messages.push({ role: 'user', content: text });
+            }
             saveData();
+            renderMessages();
 
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'ai-msg loading';
-            loadingDiv.textContent = '思考中...';
-            chatbox.appendChild(loadingDiv);
+            // 加载状态
+            const div = document.getElementById('messages');
+            const loadingEl = document.createElement('div');
+            loadingEl.className = 'msg msg-ai loading';
+            loadingEl.textContent = '思考中';
+            div.appendChild(loadingEl);
+            div.scrollTop = div.scrollHeight;
 
             try {
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${API_KEY}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
                     body: JSON.stringify({
-                        model: 'deepseek-chat',
+                        model: 'deepseek-v4-flash',
                         messages: conv.messages,
+                        temperature: 0.92,
+                        top_p: 0.9,
+                        frequency_penalty: 0.3,
+                        presence_penalty: 0.2,
                         stream: false
                     })
                 });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'API 请求失败');
-                }
-
                 const data = await response.json();
-                const aiReply = data.choices[0].message.content;
+                if (!response.ok) throw new Error(data.error?.message || '请求失败');
 
-                loadingDiv.remove();
-                conv.messages.push({ role: 'assistant', content: aiReply });
-                addMessage(aiReply, 'ai');
+                const reply = data.choices[0].message.content;
+                loadingEl.remove();
+                conv.messages.push({ role: 'assistant', content: reply });
                 saveData();
+                renderMessages();
 
-            } catch (error) {
-                loadingDiv.textContent = `❌ 错误: ${error.message}`;
-                loadingDiv.className = 'ai-msg';
-                console.error('API 调用失败:', error);
+            } catch (e) {
+                loadingEl.textContent = `❌ 错误: ${e.message}`;
+                loadingEl.className = 'msg msg-ai';
+                loadingEl.style.color = '#ff3b30';
             }
         }
 
-        // ====== 清空当前对话 ======
-        function clearCurrentConv() {
-            if (!confirm('确定清空当前对话吗？')) return;
-            const conv = getCurrentConv();
-            if (!conv) return;
-            conv.messages = [{ role: 'system', content: 'You are a helpful assistant.' }];
-            conv.title = '新对话';
-            saveData();
-            renderTabs();
-            renderMessages();
+        // ========== 9. UI事件绑定 ==========
+        const inputBox = document.getElementById('input-box');
+        const sendBtn = document.getElementById('send-btn');
+
+        inputBox.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            sendBtn.disabled = !this.value.trim();
+        });
+
+        inputBox.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (this.value.trim()) sendBtn.click();
+            }
+        });
+
+        sendBtn.addEventListener('click', function() {
+            const text = inputBox.value.trim();
+            if (!text) return;
+            inputBox.value = '';
+            inputBox.style.height = 'auto';
+            sendBtn.disabled = true;
+            sendMessageToAPI(text);
+        });
+
+        // ========== 10. 侧边栏 ==========
+        function toggleSidebar() {
+            const s = document.getElementById('sidebar');
+            const o = document.getElementById('sidebar-overlay');
+            s.classList.toggle('open');
+            o.classList.toggle('show');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('show');
         }
 
-        // ====== 事件绑定 ======
-        sendBtn.addEventListener('click', () => {
-            const text = userInput.value.trim();
-            if (text) {
-                userInput.value = '';
-                callDeepSeek(text);
-            }
-        });
-
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendBtn.click();
-            }
-        });
-
-        clearBtn.addEventListener('click', clearCurrentConv);
-
-        // ====== 启动 ======
+        // ========== 11. 启动 ==========
         loadData();
-        renderTabs();
+        renderSidebar();
         renderMessages();
     </script>
 </body>
